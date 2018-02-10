@@ -1,0 +1,11 @@
+steamcmd +login anonymous +force_install_dir ~/csgo-ds +app_update 740 +quit
+cd csgo-ds
+
+
+# to use game token
+# add +sv_setsteamaccount $GSLT -net_port_try 1
+export GSLT=<TOKEN>
+
+
+# casual
+./srcds_run -game csgo -console -usercon +game_type 0 +game_mode 0 +mapgroup mg_active +map de_dust2 +sv_setsteamaccount $GSLT -net_port_try 1
