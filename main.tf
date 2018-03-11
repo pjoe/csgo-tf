@@ -8,6 +8,10 @@ variable "public_key_path" {
   default = "~/.ssh/id_rsa.pub"
 }
 
+variable "private_key_path" {
+  default = "~/.ssh/id_rsa"
+}
+
 variable "dns_zone" {
   default = "wyrmgard.com"
 }
@@ -17,16 +21,16 @@ data "aws_route53_zone" "csgo" {
 }
 
 resource "aws_key_pair" "csgo" {
-  key_name ="csgo"
+  key_name   = "csgo"
   public_key = "${file(var.public_key_path)}"
 }
 
 resource "aws_instance" "csgo" {
-  ami           = "${var.ami}"
-  instance_type = "t2.small"
+  ami                    = "${var.ami}"
+  instance_type          = "t2.small"
   vpc_security_group_ids = ["${aws_security_group.csgo.id}"]
-  subnet_id = "${aws_subnet.default.id}"
-  key_name = "${aws_key_pair.csgo.id}"
+  subnet_id              = "${aws_subnet.default.id}"
+  key_name               = "${aws_key_pair.csgo.id}"
 
   root_block_device = {
     volume_type = "gp2"
@@ -35,6 +39,23 @@ resource "aws_instance" "csgo" {
 
   tags {
     Name = "csgo"
+  }
+
+  connection {
+    type        = "ssh"
+    user        = "ubuntu"
+    private_key = "${file(var.private_key_path)}"
+  }
+
+  provisioner "file" {
+    source      = "start.sh"
+    destination = "/home/ubuntu/start.sh"
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "chmod +x /home/ubuntu/start.sh",
+    ]
   }
 }
 
@@ -47,5 +68,5 @@ resource "aws_route53_record" "csgo" {
 }
 
 output "public_ip" {
-    value = "${aws_instance.csgo.public_ip}"
+  value = "${aws_instance.csgo.public_ip}"
 }
