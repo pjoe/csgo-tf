@@ -1,4 +1,17 @@
-provider "aws" {}
+variable "region" {
+  default = "us-east-1"
+}
+
+variable "server" {
+  type = "map"
+
+  default = {
+    name          = "CS:GO Server"
+    password      = ""
+    rcon_password = "rcon"
+    gslt          = ""
+  }
+}
 
 variable "ami" {
   default = "ami-74afe70e"
@@ -16,8 +29,30 @@ variable "dns_zone" {
   default = "wyrmgard.com"
 }
 
+provider "aws" {
+  region = "${var.region}"
+}
+
 data "aws_route53_zone" "csgo" {
   name = "${var.dns_zone}."
+}
+
+data "template_file" "start" {
+  template = "${file("${path.module}/start.sh")}"
+
+  vars {
+    gslt = "${var.server["gslt"]}"
+  }
+}
+
+data "template_file" "autoexec" {
+  template = "${file("${path.module}/autoexec.cfg")}"
+
+  vars {
+    name          = "${var.server["name"]}"
+    password      = "${var.server["password"]}"
+    rcon_password = "${var.server["rcon_password"]}"
+  }
 }
 
 resource "aws_key_pair" "csgo" {
@@ -48,7 +83,12 @@ resource "aws_instance" "csgo" {
   }
 
   provisioner "file" {
-    source      = "start.sh"
+    content     = "${data.template_file.autoexec.rendered}"
+    destination = "/home/ubuntu/csgo-ds/csgo/cfg/autoexec.cfg"
+  }
+
+  provisioner "file" {
+    content     = "${data.template_file.start.rendered}"
     destination = "/home/ubuntu/start.sh"
   }
 
