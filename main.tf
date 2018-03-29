@@ -92,6 +92,11 @@ resource "aws_instance" "csgo" {
     destination = "/home/ubuntu/start.sh"
   }
 
+  provisioner "file" {
+    source      = "gamemodes_server.txt"
+    destination = "/home/ubuntu/csgo-ds/csgo/gamemodes_server.txt"
+  }
+
   provisioner "remote-exec" {
     inline = [
       "chmod +x /home/ubuntu/start.sh",
